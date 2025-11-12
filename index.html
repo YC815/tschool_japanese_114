@@ -125,16 +125,58 @@
         margin: 0 2px;
         font-weight: 500;
       }
+
+      /* 位置切換按鈕樣式 */
+      .position-toggle {
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: #ffffff;
+        border: 2px solid #d4d4d4;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #404040;
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      .position-toggle:hover {
+        background: #fafafa;
+        border-color: #404040;
+      }
+
+      .position-toggle:active {
+        background: #f0f0f0;
+      }
+
+      /* 按鈕位置控制 */
+      .buttons-right .flex.items-start > div:first-child {
+        order: 2;
+      }
+
+      .buttons-right .flex.items-start > div:last-child {
+        order: 1;
+      }
     </style>
   </head>
   <body class="bg-gray-bg min-h-screen py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-3xl mx-auto">
       <!-- Header -->
-      <header class="text-center mb-8">
-        <h1 class="text-3xl sm:text-4xl font-bold text-gray-dark mb-2">
-          📘 日文學習卡片
-        </h1>
-        <p class="text-gray-text text-base">Japanese Learning Cards</p>
+      <header class="mb-8">
+        <div class="flex items-center justify-between mb-2">
+          <h1 class="text-3xl sm:text-4xl font-bold text-gray-dark flex-1 text-center">
+            📘 日文學習卡片
+          </h1>
+          <!-- 切換按鈕 -->
+          <button id="toggle-position" class="position-toggle" title="切換按鈕位置">
+            <span id="position-icon">靠左</span>
+          </button>
+        </div>
+        <p class="text-gray-text text-base text-center">Japanese Learning Cards</p>
       </header>
 
       <!-- Cards Container -->
@@ -154,6 +196,30 @@
     </div>
 
     <script>
+      // 按鈕位置狀態管理
+      let buttonsPosition = localStorage.getItem("buttonsPosition") || "left";
+
+      // 初始化位置
+      function initializePosition() {
+        const container = document.getElementById("list-container");
+        const icon = document.getElementById("position-icon");
+
+        if (buttonsPosition === "right") {
+          container.classList.add("buttons-right");
+          icon.textContent = "靠右";
+        } else {
+          container.classList.remove("buttons-right");
+          icon.textContent = "靠左";
+        }
+      }
+
+      // 切換位置
+      function togglePosition() {
+        buttonsPosition = buttonsPosition === "left" ? "right" : "left";
+        localStorage.setItem("buttonsPosition", buttonsPosition);
+        initializePosition();
+      }
+
       async function loadData() {
         const loading = document.getElementById("loading");
         const error = document.getElementById("error");
@@ -207,7 +273,7 @@
         card.innerHTML = `
                 <div class="flex items-start gap-4">
                     <!-- Play Buttons -->
-                    <div class="flex gap-2 flex-shrink-0">
+                    <div class="flex flex-col gap-2 flex-shrink-0">
                         <button class="play-button" data-audio="${
                           item.音檔 ? "voice/" + item.音檔 : ""
                         }" data-speed="1.0" ${
@@ -320,7 +386,14 @@
       });
 
       // Load data when page loads
-      document.addEventListener("DOMContentLoaded", loadData);
+      document.addEventListener("DOMContentLoaded", () => {
+        initializePosition();
+
+        const toggleBtn = document.getElementById("toggle-position");
+        toggleBtn.addEventListener("click", togglePosition);
+
+        loadData();
+      });
     </script>
   </body>
 </html>
