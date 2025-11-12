@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日文學習卡片</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gray-bg': '#f5f5f5',
+                        'gray-card': '#ffffff',
+                        'gray-border': '#d4d4d4',
+                        'gray-text': '#404040',
+                        'gray-dark': '#1a1a1a',
+                        'gray-hover': '#fafafa',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', 'Noto Sans JP', sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .japanese-text {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .flat-card {
+            background: #ffffff;
+            border: 2px solid #d4d4d4;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .flat-card:hover {
+            background: #fafafa;
+            border-color: #404040;
+        }
+
+        .play-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            border: 2px solid #404040;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-button:hover {
+            background: #404040;
+        }
+
+        .play-button:active {
+            background: #000000;
+        }
+
+        .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 14px solid white;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            margin-left: 3px;
+        }
+
+        .play-button.playing {
+            background: #ffffff;
+            border-color: #1a1a1a;
+        }
+
+        .play-button.playing .play-icon {
+            border: none;
+            width: 14px;
+            height: 14px;
+            background: #1a1a1a;
+            margin-left: 0;
+        }
+
+        .romaji-syllable {
+            display: inline-block;
+            background: linear-gradient(to bottom, transparent 0%, transparent 40%, #ffeb3b 40%, #ffeb3b 80%, transparent 80%);
+            padding: 0 4px;
+            margin: 0 2px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-gray-bg min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-dark mb-2">
+                📘 日文學習卡片
+            </h1>
+            <p class="text-gray-text text-base">Japanese Learning Cards</p>
+        </header>
+
+        <!-- Cards Container -->
+        <div id="list-container" class="space-y-4">
+            <!-- Card items will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="text-center text-gray-text text-xl">
+            載入中...
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden text-center text-gray-dark text-xl">
+            載入資料失敗，請檢查 data.json 檔案
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const container = document.getElementById('list-container');
+
+            try {
+                const response = await fetch('data.json');
+                if (!response.ok) throw new Error('Failed to fetch');
+
+                const data = await response.json();
+
+                // Hide loading
+                loading.classList.add('hidden');
+
+                // Create list items
+                data.forEach((item, index) => {
+                    const listItem = createListItem(item, index);
+                    container.appendChild(listItem);
+                });
+
+            } catch (err) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                console.error('Error loading data:', err);
+            }
+        }
+
+        function formatRomaji(romaji) {
+            return romaji.split('-')
+                .map(syllable => `<span class="romaji-syllable">${syllable}</span>`)
+                .join('');
+        }
+
+        function createListItem(item, index) {
+            const card = document.createElement('div');
+            card.className = 'flat-card rounded-lg p-6';
+
+            const hasNote = item.註解 && item.註解.trim() !== '';
+
+            // Emoji mapping for common phrases
+            const emojiMap = {
+                '初次見面': '🗣️',
+                '請多多指教': '🤝',
+                '謝謝': '🙏',
+                '再見': '👋',
+                '對不起': '🙇'
+            };
+
+            const emoji = emojiMap[item.中文] || '💬';
+
+            card.innerHTML = `
+                <div class="flex items-start gap-4">
+                    <!-- Play Button -->
+                    <button class="play-button flex-shrink-0" data-audio="${item.音檔 ? 'voice/' + item.音檔 : ''}" ${!item.音檔 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ''}>
+                        <div class="play-icon"></div>
+                    </button>
+
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <!-- Chinese with emoji -->
+                        <div class="mb-3">
+                            <p class="text-gray-dark font-semibold text-lg leading-relaxed">
+                                ${emoji} ${item.中文}
+                            </p>
+                        </div>
+
+                        <!-- Japanese -->
+                        <div class="mb-2 pl-6">
+                            <p class="text-gray-dark japanese-text font-bold text-3xl leading-relaxed">
+                                ${item.日文}
+                            </p>
+                        </div>
+
+                        <!-- Romaji -->
+                        <div class="mb-3 pl-6">
+                            <p class="text-gray-text text-xl tracking-wide leading-relaxed">
+                                ${formatRomaji(item.羅馬拼音)}
+                            </p>
+                        </div>
+
+                        ${hasNote ? `
+                        <!-- Note Section -->
+                        <div class="mt-4 pt-3 border-t border-gray-border">
+                            <div class="bg-gray-hover rounded-lg px-4 py-2 border border-gray-border">
+                                <p class="text-gray-text text-sm leading-relaxed">
+                                    💡 ${item.註解}
+                                </p>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Audio player
+        let currentAudio = null;
+        let currentButton = null;
+
+        function playAudio(audioFile, button) {
+            // Stop current audio if playing
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentButton) {
+                    currentButton.classList.remove('playing');
+                }
+            }
+
+            // If clicking the same button, just stop
+            if (currentButton === button && currentAudio) {
+                currentAudio = null;
+                currentButton = null;
+                return;
+            }
+
+            // Play new audio
+            currentAudio = new Audio(audioFile);
+            currentButton = button;
+            button.classList.add('playing');
+
+            currentAudio.play().catch(err => {
+                console.error('Audio playback failed:', err);
+                button.classList.remove('playing');
+            });
+
+            currentAudio.addEventListener('ended', () => {
+                button.classList.remove('playing');
+                currentAudio = null;
+                currentButton = null;
+            });
+        }
+
+        // Add click listeners to play buttons
+        document.addEventListener('click', (e) => {
+            const button = e.target.closest('.play-button');
+            if (button && !button.disabled) {
+                const audioFile = button.dataset.audio;
+                if (audioFile) {
+                    playAudio(audioFile, button);
+                }
+            }
+        });
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
