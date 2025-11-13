@@ -130,7 +130,7 @@ function createListItem(item) {
                         </button>
                         <button class="play-button slow" data-audio="${
                           item.音檔 ? "voice/" + item.音檔 : ""
-                        }" data-speed="0.50" ${
+                        }" data-speed="0.60" ${
     !item.音檔 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ""
   }>
                             <span class="text-xl leading-none">🐢</span>
