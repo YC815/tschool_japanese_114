@@ -185,6 +185,124 @@
         flex-direction: column;
         gap: 16px;
       }
+
+      /* 區段導航樣式 */
+      .section-nav {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding: 16px 0;
+        margin-bottom: 24px;
+        border-bottom: 2px solid #d4d4d4;
+        flex-wrap: wrap;
+      }
+
+      .section-nav-btn {
+        padding: 8px 16px;
+        background: #ffffff;
+        border: 2px solid #d4d4d4;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 16px;
+        font-weight: 500;
+        color: #404040;
+        white-space: nowrap;
+      }
+
+      .section-nav-btn:hover {
+        background: #fafafa;
+        border-color: #404040;
+      }
+
+      .section-nav-btn:active {
+        background: #f0f0f0;
+      }
+
+      .section-nav-btn.active {
+        background: #1a1a1a;
+        color: #ffffff;
+        border-color: #1a1a1a;
+      }
+
+      /* 手機版 RWD */
+      @media (max-width: 640px) {
+        .section-nav {
+          justify-content: flex-start;
+          overflow-x: auto;
+          flex-wrap: nowrap;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+
+        .section-nav::-webkit-scrollbar {
+          display: none;
+        }
+
+        .section-nav-btn {
+          flex-shrink: 0;
+        }
+      }
+
+      /* 回到頂端按鈕 */
+      .scroll-to-top {
+        position: fixed;
+        bottom: 32px;
+        right: 32px;
+        width: 56px;
+        height: 56px;
+        background: #1a1a1a;
+        color: #ffffff;
+        border: 2px solid #404040;
+        border-radius: 50%;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        opacity: 0;
+        visibility: hidden;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .scroll-to-top.left {
+        right: auto;
+        left: 32px;
+      }
+
+      .scroll-to-top.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .scroll-to-top:hover {
+        background: #404040;
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      }
+
+      .scroll-to-top:active {
+        background: #000000;
+        transform: translateY(-2px);
+      }
+
+      @media (max-width: 640px) {
+        .scroll-to-top {
+          width: 48px;
+          height: 48px;
+          bottom: 24px;
+          right: 24px;
+          font-size: 20px;
+        }
+
+        .scroll-to-top.left {
+          right: auto;
+          left: 24px;
+        }
+      }
     </style>
   </head>
   <body class="bg-gray-bg min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -238,6 +356,11 @@
       </div>
     </div>
 
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="回到頂端">
+      ↑
+    </button>
+
     <script>
       // 按鈕位置狀態管理
       let buttonsPosition = localStorage.getItem("buttonsPosition") || "left";
@@ -246,13 +369,16 @@
       function initializePosition() {
         const container = document.getElementById("list-container");
         const icon = document.getElementById("position-icon");
+        const scrollBtn = document.getElementById("scroll-to-top");
 
         if (buttonsPosition === "right") {
           container.classList.add("buttons-right");
           icon.textContent = "靠右";
+          if (scrollBtn) scrollBtn.classList.remove("left");
         } else {
           container.classList.remove("buttons-right");
           icon.textContent = "靠左";
+          if (scrollBtn) scrollBtn.classList.add("left");
         }
       }
 
@@ -261,6 +387,32 @@
         buttonsPosition = buttonsPosition === "left" ? "right" : "left";
         localStorage.setItem("buttonsPosition", buttonsPosition);
         initializePosition();
+      }
+
+      // 滾動到指定區段
+      function scrollToSection(sectionName) {
+        const sectionId = "section-" + encodeURIComponent(sectionName);
+        const section = document.getElementById(sectionId);
+
+        if (section) {
+          section.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }
+
+      // 建立區段導航列
+      function createSectionNav(sectionNames) {
+        const nav = document.getElementById("section-nav");
+
+        sectionNames.forEach((name) => {
+          const btn = document.createElement("button");
+          btn.className = "section-nav-btn";
+          btn.textContent = name;
+          btn.onclick = () => scrollToSection(name);
+          nav.appendChild(btn);
+        });
       }
 
       async function loadData() {
@@ -277,6 +429,9 @@
           // Hide loading
           loading.classList.add("hidden");
 
+          // Create section navigation
+          createSectionNav(Object.keys(data));
+
           // Iterate through sections
           Object.entries(data).forEach(([sectionName, items]) => {
             const section = createSection(sectionName, items);
@@ -292,6 +447,7 @@
       function createSection(sectionName, items) {
         const section = document.createElement("div");
         section.className = "section-container";
+        section.id = "section-" + encodeURIComponent(sectionName);
 
         const title = document.createElement("h2");
         title.className = "section-title";
@@ -440,12 +596,34 @@
         }
       });
 
+      // Scroll to top functionality
+      function scrollToTop() {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+
+      function toggleScrollToTopButton() {
+        const scrollBtn = document.getElementById("scroll-to-top");
+        if (window.scrollY > 300) {
+          scrollBtn.classList.add("show");
+        } else {
+          scrollBtn.classList.remove("show");
+        }
+      }
+
       // Load data when page loads
       document.addEventListener("DOMContentLoaded", () => {
         initializePosition();
 
         const toggleBtn = document.getElementById("toggle-position");
         toggleBtn.addEventListener("click", togglePosition);
+
+        const scrollBtn = document.getElementById("scroll-to-top");
+        scrollBtn.addEventListener("click", scrollToTop);
+
+        window.addEventListener("scroll", toggleScrollToTopButton);
 
         loadData();
       });
