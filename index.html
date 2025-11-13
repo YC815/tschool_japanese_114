@@ -161,6 +161,30 @@
       .buttons-right .flex.items-start > div:last-child {
         order: 1;
       }
+
+      /* 區段樣式 */
+      .section-container {
+        margin-bottom: 48px;
+      }
+
+      .section-container:last-child {
+        margin-bottom: 0;
+      }
+
+      .section-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 3px solid #d4d4d4;
+      }
+
+      .section-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
     </style>
   </head>
   <body class="bg-gray-bg min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -168,20 +192,39 @@
       <!-- Header -->
       <header class="mb-8">
         <div class="flex items-center justify-between mb-2">
-          <h1 class="text-3xl sm:text-4xl font-bold text-gray-dark flex-1 text-center">
+          <h1
+            class="text-3xl sm:text-4xl font-bold text-gray-dark flex-1 text-center"
+          >
             📘 日文學習卡片
           </h1>
           <!-- 切換按鈕 -->
-          <button id="toggle-position" class="position-toggle" title="切換按鈕位置">
+          <button
+            id="toggle-position"
+            class="position-toggle"
+            title="切換按鈕位置"
+          >
             <span id="position-icon">靠左</span>
           </button>
         </div>
-        <p class="text-gray-text text-base text-center">Made by <a href="https://yushun.chen.zone" target="_blank" class="text-gray-dark underline font-medium">Yushun</a></p>
+        <p class="text-gray-text text-base text-center">
+          Made by
+          <a
+            href="https://yushun.chen.zone"
+            target="_blank"
+            class="text-gray-dark underline font-medium"
+            >Yushun</a
+          >
+        </p>
       </header>
 
+      <!-- Section Navigation -->
+      <nav id="section-nav" class="section-nav">
+        <!-- Navigation buttons will be inserted here by JavaScript -->
+      </nav>
+
       <!-- Cards Container -->
-      <div id="list-container" class="space-y-4">
-        <!-- Card items will be inserted here by JavaScript -->
+      <div id="list-container">
+        <!-- Sections and cards will be inserted here by JavaScript -->
       </div>
 
       <!-- Loading State -->
@@ -234,16 +277,38 @@
           // Hide loading
           loading.classList.add("hidden");
 
-          // Create list items
-          data.forEach((item, index) => {
-            const listItem = createListItem(item, index);
-            container.appendChild(listItem);
+          // Iterate through sections
+          Object.entries(data).forEach(([sectionName, items]) => {
+            const section = createSection(sectionName, items);
+            container.appendChild(section);
           });
         } catch (err) {
           loading.classList.add("hidden");
           error.classList.remove("hidden");
           console.error("Error loading data:", err);
         }
+      }
+
+      function createSection(sectionName, items) {
+        const section = document.createElement("div");
+        section.className = "section-container";
+
+        const title = document.createElement("h2");
+        title.className = "section-title";
+        title.textContent = sectionName;
+
+        const cardsContainer = document.createElement("div");
+        cardsContainer.className = "section-cards";
+
+        items.forEach((item) => {
+          const card = createListItem(item);
+          cardsContainer.appendChild(card);
+        });
+
+        section.appendChild(title);
+        section.appendChild(cardsContainer);
+
+        return section;
       }
 
       function formatRomaji(romaji) {
@@ -253,22 +318,12 @@
           .join("");
       }
 
-      function createListItem(item, index) {
+      function createListItem(item) {
         const card = document.createElement("div");
         card.className = "flat-card rounded-lg p-6";
 
         const hasNote = item.註解 && item.註解.trim() !== "";
-
-        // Emoji mapping for common phrases
-        const emojiMap = {
-          初次見面: "🗣️",
-          請多多指教: "🤝",
-          謝謝: "🙏",
-          再見: "👋",
-          對不起: "🙇",
-        };
-
-        const emoji = emojiMap[item.中文] || "💬";
+        const emoji = item.emoji || "💬";
 
         card.innerHTML = `
                 <div class="flex items-start gap-4">
@@ -283,7 +338,7 @@
                         </button>
                         <button class="play-button slow" data-audio="${
                           item.音檔 ? "voice/" + item.音檔 : ""
-                        }" data-speed="0.65" ${
+                        }" data-speed="0.50" ${
           !item.音檔 ? 'disabled style="opacity:0.3;cursor:not-allowed;"' : ""
         }>
                             <span class="text-xl leading-none">🐢</span>
